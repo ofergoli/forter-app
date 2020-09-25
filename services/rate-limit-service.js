@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const mapper = {};
 
 const LIMIT_MESSAGE = 'Sorry too many requests. Please try again later.';
@@ -33,19 +34,20 @@ const rateLimiter = (windowSize, maxPerWindow) => (req, res, next) => {
         };
     } else {
         const { currentProvider } = mapper[ip];
-        if (currentProvider === mapper[ip].providers.length) {
+        const provider = mapper[ip].providers[currentProvider];
+        if (currentProvider === _.get(mapper[ip], 'providers.length')) {
             return res.send(LIMIT_MESSAGE);
         }
-        mapper[ip].providers[currentProvider].counter++;
+        provider.counter++;
 
-        const { counter, lastFirstRequest } = mapper[ip].providers[currentProvider];
+        const { counter, lastFirstRequest } = provider;
         if ((counter + 1) > maxPerWindow && (Date.now() - lastFirstRequest < windowSize)) {
             mapper[ip].currentProvider++;
         }
     }
 
     const { currentProvider } = mapper[ip];
-    if (currentProvider === mapper[ip].providers.length) {
+    if (currentProvider === _.get(mapper[ip], 'providers.length')) {
         return res.send(LIMIT_MESSAGE);
     }
     req.currentProvider = mapper[ip].providers[currentProvider].providerName;
